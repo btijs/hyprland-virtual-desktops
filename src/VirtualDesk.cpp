@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <format>
+#include <src/managers/EventManager.hpp>
 
 VirtualDesk::VirtualDesk(int id, std::string name) {
     this->id   = id;
@@ -181,8 +182,21 @@ Layout VirtualDesk::generateCurrentMonitorLayout() {
     for (int i = vdeskFirstWorkspace; i < vdeskFirstWorkspace + monitors.size(); i++) {
         layout[monitors[j]] = i;
         j++;
+
+        renameWorkspace(i);
+
     }
     return layout;
+}
+
+std::string VirtualDesk::renameWorkspace(WORKSPACEID id) {
+    PHLWORKSPACE workspace = g_pCompositor->getWorkspaceByID(id);
+    std::string name = std::to_string(this->id) + "." + std::to_string(workspace->monitorID());
+
+    workspace->rename(name);
+    g_pEventManager->postEvent(SHyprIPCEvent{
+        "renameworkspace", std::to_string(workspace->monitorID()) + ',' + name
+    });
 }
 
 std::string VirtualDesk::monitorDesc(const CSharedPointer<CMonitor>& monitor) {
