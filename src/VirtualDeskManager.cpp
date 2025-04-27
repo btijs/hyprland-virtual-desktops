@@ -75,34 +75,53 @@ void VirtualDeskManager::applyCurrentVDesk() {
         PHLWORKSPACE workspace = g_pCompositor->getWorkspaceByID(workspaceId);
         if (!workspace) {
             printLog("Creating workspace " + std::to_string(workspaceId));
-            workspace = g_pCompositor->createNewWorkspace(workspaceId, mon->ID);
-            renameWorkspace(workspaceId, mon->ID);
+            workspace = g_pCompositor->createNewWorkspace(
+                workspaceId,
+                mon->ID,
+                getWorkspaceName(activeVdesk()->id, mon->ID)
+            );
+            g_pEventManager->postEvent(SHyprIPCEvent{"workspace", workspace->m_name});
         }
 
-        if (workspace->m_monitor != mon)
+        if (workspace->m_monitor != mon) {
             g_pCompositor->moveWorkspaceToMonitor(workspace, currentMonitor);
+            g_pEventManager->postEvent(SHyprIPCEvent{"workspace", workspace->m_name});
+        }
 
         // Hack: we change the workspace on the current monitor as our last operation,
         // so that we also automatically focus it
         if (currentMonitor && mon->ID == currentMonitor->ID) {
             focusedWorkspace = workspace;
+            renameWorkspace(workspaceId, mon->ID, activeVdesk()->id);
             continue;
         }
-        mon->changeWorkspace(workspace, false);
+        mon->changeWorkspace(workspace);
+        g_pEventManager->postEvent(SHyprIPCEvent{"workspace", workspace->m_name});
+        renameWorkspace(workspaceId, mon->ID, activeVdesk()->id);
     }
-    if (currentMonitor && focusedWorkspace)
-        currentMonitor->changeWorkspace(focusedWorkspace, false);
+    if (currentMonitor && focusedWorkspace) {
+        currentMonitor->changeWorkspace(focusedWorkspace);
+        g_pEventManager->postEvent(SHyprIPCEvent{"workspace", focusedWorkspace->m_name});
+        renameWorkspace(focusedWorkspace->m_id, focusedWorkspace->monitorID(), activeVdesk()->id);
+    }
 
     g_pEventManager->postEvent(SHyprIPCEvent{VDESKCHANGE_EVENT_STR, std::to_string(m_activeDeskKey)});
+
 }
 
-void VirtualDeskManager::renameWorkspace(WORKSPACEID workspaceId, MONITORID monitorId) {
-    PHLWORKSPACE workspace = g_pCompositor->getWorkspaceByID(workspaceId);
-    std::string name = std::to_string(monitorId) + "." + std::to_string(workspaceId);
+std::string VirtualDeskManager::getWorkspaceName(int desk_id, MONITORID monitor_id) {
+     return std::to_string(desk_id) + "." + std::to_string(monitor_id);
+}
 
+void VirtualDeskManager::renameWorkspace(WORKSPACEID workspaceId, MONITORID monitorId, int vdeskId) {
+    PHLWORKSPACE workspace = g_pCompositor->getWorkspaceByID(workspaceId);
+    std::string name = getWorkspaceName(vdeskId, monitorId);
+
+    if (workspace->m_name == name)
+        return;
     workspace->rename(name);
     g_pEventManager->postEvent(SHyprIPCEvent{
-    "renameworkspace", std::to_string(monitorId) + ',' + name
+    "renameworkspace", std::to_string(workspaceId) + ',' + name
     });
 }
 
@@ -158,7 +177,20 @@ int VirtualDeskManager::moveToDesk(std::string& arg, int vdeskId) {
         moveCmd = std::to_string(wid) + "," + arg;
     }
 
+    // Check if this workspace already exists
+    // if not, create it and send an event
+    PHLWORKSPACE workspace = g_pCompositor->getWorkspaceByID(wid);
+    if (!workspace) {
+        workspace = g_pCompositor->createNewWorkspace(
+            wid,
+            monitor->ID,
+            getWorkspaceName(vdeskId, monitor->ID)
+        );
+        g_pEventManager->postEvent(SHyprIPCEvent{"workspace", workspace->m_name});
+    }
+
     HyprlandAPI::invokeHyprctlCommand("dispatch", "movetoworkspacesilent " + moveCmd);
+
     return vdeskId;
 }
 
