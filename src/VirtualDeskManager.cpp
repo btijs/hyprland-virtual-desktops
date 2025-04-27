@@ -76,6 +76,7 @@ void VirtualDeskManager::applyCurrentVDesk() {
         if (!workspace) {
             printLog("Creating workspace " + std::to_string(workspaceId));
             workspace = g_pCompositor->createNewWorkspace(workspaceId, mon->ID);
+            renameWorkspace(workspaceId, mon->ID);
         }
 
         if (workspace->m_monitor != mon)
@@ -93,6 +94,16 @@ void VirtualDeskManager::applyCurrentVDesk() {
         currentMonitor->changeWorkspace(focusedWorkspace, false);
 
     g_pEventManager->postEvent(SHyprIPCEvent{VDESKCHANGE_EVENT_STR, std::to_string(m_activeDeskKey)});
+}
+
+void VirtualDeskManager::renameWorkspace(WORKSPACEID workspaceId, MONITORID monitorId) {
+    PHLWORKSPACE workspace = g_pCompositor->getWorkspaceByID(workspaceId);
+    std::string name = std::to_string(monitorId) + "." + std::to_string(workspaceId);
+
+    workspace->rename(name);
+    g_pEventManager->postEvent(SHyprIPCEvent{
+    "renameworkspace", std::to_string(monitorId) + ',' + name
+    });
 }
 
 int VirtualDeskManager::moveToDesk(std::string& arg, int vdeskId) {
