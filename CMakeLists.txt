@@ -28,6 +28,7 @@ endif()
 
 include_directories(/usr/include/libinput)
 include_directories(/usr/include/wayland)
+include_directories(/usr/include/libxkbcommon/)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 file(GLOB_RECURSE SRC "src/*.cpp")
