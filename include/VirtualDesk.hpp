@@ -57,7 +57,6 @@ class VirtualDesk {
     int                m_activeLayout_idx;
     bool               activeIsValid = false;
     Layout             generateCurrentMonitorLayout();
-    std::string        renameWorkspace(WORKSPACEID id);
     static std::string monitorDesc(const CSharedPointer<CMonitor>&);
     void               checkAndAdaptLayout(Layout*, const CSharedPointer<CMonitor>& exclude = nullptr);
 };

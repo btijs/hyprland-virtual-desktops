@@ -20,6 +20,7 @@ class VirtualDeskManager {
     void                                                  prevDesk(bool backwardCycle);
     void                                                  nextDesk(bool cycle);
     void                                                  applyCurrentVDesk();
+    void                                                  renameWorkspace(WORKSPACEID workspaceId, MONITORID monitorId);
     int                                                   moveToDesk(std::string&, int vdeskId = -1);
     void                                                  loadLayoutConf();
     void                                                  invalidateAllLayouts();
