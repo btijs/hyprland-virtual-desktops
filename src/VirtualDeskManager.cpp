@@ -77,8 +77,8 @@ void VirtualDeskManager::applyCurrentVDesk() {
             printLog("Creating workspace " + std::to_string(workspaceId));
             workspace = g_pCompositor->createNewWorkspace(
                 workspaceId,
-                mon->ID,
-                getWorkspaceName(activeVdesk()->id, mon->ID)
+                mon->m_id,
+                getWorkspaceName(activeVdesk()->id, mon->m_id)
             );
             g_pEventManager->postEvent(SHyprIPCEvent{"workspace", workspace->m_name});
         }
@@ -92,12 +92,12 @@ void VirtualDeskManager::applyCurrentVDesk() {
         // so that we also automatically focus it
         if (currentMonitor && mon->m_id == currentMonitor->m_id) {
             focusedWorkspace = workspace;
-            renameWorkspace(workspaceId, mon->ID, activeVdesk()->id);
+            renameWorkspace(workspaceId, mon->m_id, activeVdesk()->id);
             continue;
         }
         mon->changeWorkspace(workspace);
         g_pEventManager->postEvent(SHyprIPCEvent{"workspace", workspace->m_name});
-        renameWorkspace(workspaceId, mon->ID, activeVdesk()->id);
+        renameWorkspace(workspaceId, mon->m_id, activeVdesk()->id);
     }
     if (currentMonitor && focusedWorkspace) {
         currentMonitor->changeWorkspace(focusedWorkspace);
@@ -183,8 +183,8 @@ int VirtualDeskManager::moveToDesk(std::string& arg, int vdeskId) {
     if (!workspace) {
         workspace = g_pCompositor->createNewWorkspace(
             wid,
-            monitor->ID,
-            getWorkspaceName(vdeskId, monitor->ID)
+            monitor->m_id,
+            getWorkspaceName(vdeskId, monitor->m_id)
         );
         g_pEventManager->postEvent(SHyprIPCEvent{"workspace", workspace->m_name});
     }
